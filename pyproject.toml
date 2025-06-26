@@ -1,0 +1,20 @@
+[project]
+name = "cicd-test"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Kirill",email = "kllraz@yandex.ru"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi (>=0.115.13,<0.116.0)",
+    "uvicorn (>=0.34.3,<0.35.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
