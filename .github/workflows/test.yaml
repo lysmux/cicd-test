@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     types:
       - opened
@@ -17,17 +18,20 @@ jobs:
       cache-key: ${{ steps.cache-venv.outputs.cache-primary-key }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
       - name: Load cached venv
         id: cache-venv
         uses: actions/cache/restore@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
       # ==== Install dependencies if cache does not exists ====
       - name: Install Poetry
         if: steps.cache-venv.outputs.cache-hit != 'true'
@@ -38,9 +42,11 @@ jobs:
           virtualenvs-in-project: true
           virtualenvs-path: .venv
           installer-parallel: true
+
       - name: Install dependencies
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
+
       - name: Cache venv
         if: steps.cache-venv.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -54,11 +60,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Load cached venv
         uses: actions/cache/restore@v4
         with:
           path: .venv
           key: ${{ needs.setup.outputs.cache-key }}
+
       - name: Lint
         run: |
           .venv/bin/ruff check
@@ -69,16 +77,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Load cached venv
         uses: actions/cache/restore@v4
         with:
           path: .venv
           key: ${{ needs.setup.outputs.cache-key }}
+
       - name: Test
         run: |
           .venv/bin/pytest -v -s \
             --self-contained-html --html=pytest.html \
             --cov=./ --cov-report=html
+
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
@@ -86,3 +97,10 @@ jobs:
           path: |
             pytest.html
             htmlcov/
+
+  build:
+    if: ${{ github.event_name != 'pull_request' }}
+    needs:
+      - lint
+      - test
+    uses: ./.github/workflows/build.yaml
